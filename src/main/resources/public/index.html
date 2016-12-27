@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MCWrapper | Console</title>
+    <meta name="theme-color" content="#1fc8db">
+    <meta name="description" content="MCWrapper Console">
+    <meta name="author" content="CodeHat">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.2.3/css/bulma.min.css">
+</head>
+<body>
+
+<div class="container has-text-centered">
+    <div class="notification">
+        <strong>MCWrapper</strong> Console
+    </div>
+    <p class="control">
+        <textarea id="console" class="textarea" placeholder="Console output goes here." readonly></textarea>
+    </p>
+    <div class="control is-grouped">
+        <p class="control is-expanded">
+            <input class="input" id="message" type="text" placeholder="Send a command to your server">
+        </p>
+        <p class="control">
+            <a class="button is-info" id="send">
+                Send
+            </a>
+        </p>
+    </div>
+</div>
+
+<script src="websocketDemo.js"></script>
+</body>
+</html>
