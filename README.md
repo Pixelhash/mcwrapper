@@ -7,8 +7,6 @@ Repository of the MCWrapper.
 
 *This wrapper is not ready for production!*
 
-Authentication in the web interface is not implemented yet!
-
 ## License
 
 GPLv3

@@ -6,6 +6,7 @@ import de.codehat.mcwrapper.util.Constants;
 import de.codehat.mcwrapper.web.*;
 import de.codehat.mcwrapper.web.Console;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.eclipse.jetty.websocket.api.Session;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -30,6 +31,7 @@ public class ServerManager {
     private boolean subExit = false;
 
     public static BufferedWriter writer;
+    public static String passwordHash = null;
 
     public ServerManager() {
         this.setupFieldTests();
@@ -38,13 +40,14 @@ public class ServerManager {
 
     public void startServer(String name) throws ServerDoesNotExistException {
         Server server = this.getServer(name);
+        passwordHash = server.getPassword();
         System.out.println("Starting server '" + name + "' with uuid '" + server.getUuid() + "'...");
 
         ipAddress(server.getIpAddress());
         port(server.getPort());
         staticFiles.location("/public");
         //staticFiles.expireTime(600);
-        webSocket("/chat", ConsoleWebSocketHandler.class);
+        webSocket("/console", ConsoleWebSocketHandler.class);
         init();
 
         ProcessBuilder processBuilder = new ProcessBuilder(server.getStartArgs());
@@ -87,10 +90,10 @@ public class ServerManager {
         System.out.printf("Output:\n");
         try {
             while ((line = br.readLine()) != null) {
+                final String lineCopy = line;
                 System.out.println(line);
-                if (Console.userUsernameMap.containsValue("User1")) {
-                    Console.broadcastMessage("User1", line);
-                }
+                Console.userUsernameMap.keySet().stream().filter(Session::isOpen).forEach(s -> Console.broadcastMessage(
+                        Console.userUsernameMap.get(s), lineCopy));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -101,6 +104,7 @@ public class ServerManager {
             int exitValue = process.waitFor();
             System.out.println("\n\nExit Value is " + exitValue);
             System.out.println("Press ENTER to close application.");
+            halt();
             subExit = true;
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block

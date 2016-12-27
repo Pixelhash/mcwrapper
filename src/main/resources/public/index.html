@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -10,28 +10,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.2.3/css/bulma.min.css">
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
-<div class="container has-text-centered">
-    <div class="notification">
-        <strong>MCWrapper</strong> Console
-    </div>
-    <p class="control">
-        <textarea id="console" class="textarea" placeholder="Console output goes here." readonly></textarea>
-    </p>
-    <div class="control is-grouped">
-        <p class="control is-expanded">
-            <input class="input" id="message" type="text" placeholder="Send a command to your server">
-        </p>
-        <p class="control">
-            <a class="button is-info" id="send">
-                Send
-            </a>
-        </p>
-    </div>
-</div>
+<section class="section">
+    <div class="container">
+        <div class="heading has-text-centered">
+            <h1 class="title">MCWrapper</h1>
+            <h2 class="subtitle">
+                The simple <strong>Minecraft</strong> Server Wrapper
+            </h2>
+        </div>
+        <div class="columns" id="auth">
+            <div class="column"></div>
+            <div class="column">
+                <p class="control has-icon">
+                    <input class="input" type="password" placeholder="Password" id="password">
+                    <i class="fa fa-lock"></i>
+                </p>
+                <p class="control control-center">
+                    <button class="button is-success" id="login">
+                        Login
+                    </button>
+                </p>
+            </div>
+            <div class="column"></div>
+        </div>
+        <div class="main">
+            <!--<p class="control">
+                <textarea id="console" class="textarea" placeholder="Console output goes here." readonly></textarea>
+            </p>-->
+            <div class="console">
+                <blockquote class="line">Console output goes here.</blockquote>
 
-<script src="websocketDemo.js"></script>
+            </div>
+            <div class="control is-grouped">
+                <p class="control is-expanded">
+                    <input class="input" id="message" type="text" placeholder="Send a command to your server">
+                </p>
+                <p class="control">
+                    <a class="button is-info" id="send">
+                        Send
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<footer class="footer">
+    <div class="container">
+        <div class="content has-text-centered">
+            <p>
+                <strong>MCWrapper</strong> by <a href="https://codehat.de">CodeHat</a>. The source code is licensed
+                <a href="https://www.gnu.org/licenses/gpl-3.0.de.html">GPL-3.0</a>.
+            </p>
+            <p>
+                <a class="icon" href="https://github.com/PixelHash/mcwrapper">
+                    <i class="fa fa-github"></i>
+                </a>
+            </p>
+        </div>
+    </div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
