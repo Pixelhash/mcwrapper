@@ -32,6 +32,7 @@ public class ServerManager {
 
     public static BufferedWriter writer;
     public static String passwordHash = null;
+    public static boolean restart = true;
 
     public ServerManager() {
         this.setupFieldTests();
@@ -42,79 +43,85 @@ public class ServerManager {
         Server server = this.getServer(name);
         passwordHash = server.getPassword();
         System.out.println("Starting server '" + name + "' with uuid '" + server.getUuid() + "'...");
-        boolean restart = true;
-
-        while (restart) {
-            restart = server.isRestartOnCrash();
-        }
-
         ipAddress(server.getIpAddress());
         port(server.getPort());
         staticFiles.location("/public");
         webSocket("/console", ConsoleWebSocketHandler.class);
         init();
 
-        ProcessBuilder processBuilder = new ProcessBuilder(server.getStartArgs());
-        processBuilder.directory(new File(server.getDirectory()));
-        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
-        Process process = null;
-        try {
-            process = processBuilder.start();
-        } catch (IOException e) {
-            System.out.println("Could not start server!");
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        //Read out dir output
-        InputStream is = process.getInputStream();
-        OutputStream os = process.getOutputStream();
-        writer = new BufferedWriter(new OutputStreamWriter(os));
-        new Thread(() -> {
-            Scanner in = new Scanner(System.in);
-            boolean exit = false;
-            while (!exit) {
-                String cmd1 = in.nextLine();
-                if (subExit) {
-                    exit = true;
-                    return;
-                }
-                try {
-                    writer.write(cmd1 + "\n");
-                    writer.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        while (restart) {
+            subExit = false;
+            restart = server.isRestartOnCrash();
+            ProcessBuilder processBuilder = new ProcessBuilder(server.getStartArgs());
+            processBuilder.directory(new File(server.getDirectory()));
+            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            Process process = null;
+            try {
+                process = processBuilder.start();
+            } catch (IOException e) {
+                System.out.println("Could not start server!");
+                e.printStackTrace();
+                System.exit(1);
             }
-        }).start();
 
-        InputStreamReader isr = new InputStreamReader(is);
-        BufferedReader br = new BufferedReader(isr);
-        String line;
-        System.out.printf("Output:\n");
-        try {
-            while ((line = br.readLine()) != null) {
-                final String lineCopy = line;
-                System.out.println(line);
-                Console.userUsernameMap.keySet().stream().filter(Session::isOpen).forEach(s -> Console.broadcastMessage(
-                        Console.userUsernameMap.get(s), lineCopy));
+            //Read out dir output
+            InputStream is = process.getInputStream();
+            OutputStream os = process.getOutputStream();
+            writer = new BufferedWriter(new OutputStreamWriter(os));
+            new Thread(() -> {
+                Scanner in = new Scanner(System.in);
+                boolean exit = false;
+                while (!exit) {
+                    String cmd1 = in.nextLine();
+                    if (subExit) {
+                        exit = true;
+                        return;
+                    }
+                    try {
+                        if (cmd1.toLowerCase().equals("!stop")) {
+                            restart = false;
+                            writer.write("stop\n");
+                            writer.flush();
+                            exit = true;
+                            return;
+                        }
+                        writer.write(cmd1 + "\n");
+                        writer.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            String line;
+            System.out.printf("Output:\n");
+            try {
+                while ((line = br.readLine()) != null) {
+                    final String lineCopy = line;
+                    System.out.println(line);
+                    /*Console.userUsernameMap.keySet().stream().filter(Session::isOpen).forEach(s -> Console.broadcastMessage(
+                            Console.userUsernameMap.get(s), lineCopy));*/
+                    Console.broadcastMessage("Server", lineCopy);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        //Wait to get exit value
-        try {
-            int exitValue = process.waitFor();
-            stop();
-            System.out.println("\n\nExit Value is " + exitValue);
-            System.out.println("Press ENTER to close application.");
-            subExit = true;
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            //Wait to get exit value
+            try {
+                int exitValue = process.waitFor();
+                System.out.println("\n\nExit Value is " + exitValue);
+                subExit = true;
+                System.out.println("Sleeping 2.5s to stop process...");
+                Thread.sleep(2500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-
+        stop();
+        System.out.println("Press ENTER to close application.");
     }
 
     public String nextSessionId() {

@@ -1,13 +1,10 @@
 package de.codehat.mcwrapper.web;
 
-import org.eclipse.jetty.websocket.api.*;
+import org.eclipse.jetty.websocket.api.Session;
 import org.json.JSONObject;
 
-import java.text.*;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static j2html.TagCreator.*;
 
 public class Console {
 
@@ -21,21 +18,10 @@ public class Console {
             try {
                 session.getRemote().sendString(String.valueOf(new JSONObject()
                         .put("userMessage", message)
-                        .put("userlist", userUsernameMap.values())
                 ));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
     }
-
-    //Builds a HTML element with a sender-name, a message, and a timestamp,
-    private static String createHtmlMessageFromSender(String sender, String message) {
-        return article().with(
-                b(sender + " says:"),
-                p(message),
-                span().withClass("timestamp").withText(new SimpleDateFormat("HH:mm:ss").format(new Date()))
-        ).render();
-    }
-
 }

@@ -1,5 +1,6 @@
 package de.codehat.mcwrapper.web;
 
+import de.codehat.mcwrapper.server.Server;
 import de.codehat.mcwrapper.server.ServerManager;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.jetty.websocket.api.*;
@@ -31,13 +32,19 @@ public class ConsoleWebSocketHandler {
     public void onClose(Session user, int statusCode, String reason) {
         String username = Console.userUsernameMap.get(user);
         Console.userUsernameMap.remove(user);
-        Console.broadcastMessage(sender = "Server", msg = (username + " left the chat"));
+        Console.broadcastMessage(sender = "Server", msg = ("-> '" + username + "' left the console"));
     }
 
     @OnWebSocketMessage
     public void onMessage(Session user, String message) {
         if (message.toLowerCase().startsWith("op") || message.toLowerCase().startsWith("pex")) return;
         try {
+            if (message.toLowerCase().equals("!stop")) {
+                ServerManager.restart = false;
+                ServerManager.writer.write("stop\n");
+                ServerManager.writer.flush();
+                return;
+            }
             ServerManager.writer.write(message + "\n");
             ServerManager.writer.flush();
         } catch (IOException e) {
