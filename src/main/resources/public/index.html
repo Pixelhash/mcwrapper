@@ -19,8 +19,17 @@
         <div class="heading has-text-centered">
             <h1 class="title">MCWrapper</h1>
             <h2 class="subtitle">
-                The simple <strong>Minecraft</strong> Server Wrapper
+                A simple <strong>Minecraft</strong> Server Wrapper
             </h2>
+        </div>
+        <div class="columns">
+            <div class="column"></div>
+            <div class="column">
+                <div class="notification is-info is-outlined has-text-centered" id="status">
+                    Please login!
+                </div>
+            </div>
+            <div class="column"></div>
         </div>
         <div class="columns" id="auth">
             <div class="column"></div>
@@ -38,9 +47,6 @@
             <div class="column"></div>
         </div>
         <div class="main">
-            <!--<p class="control">
-                <textarea id="console" class="textarea" placeholder="Console output goes here." readonly></textarea>
-            </p>-->
             <div class="console">
                 <blockquote class="line">Console output goes here (not more than 50 rows).</blockquote>
 
@@ -51,9 +57,18 @@
                 </p>
                 <p class="control">
                     <a class="button is-info" id="send">
-                        Send
+                        <span class="icon is-small">
+                        <i class="fa fa-send"></i>
+                        </span>
+                        <span>Send</span>
                     </a>
                 </p>
+            </div>
+            <br>
+            <div class="content is-medium has-text-centered">
+                <p>Connected users (in console):</p>
+                <ul id="users">
+                </ul>
             </div>
         </div>
     </div>

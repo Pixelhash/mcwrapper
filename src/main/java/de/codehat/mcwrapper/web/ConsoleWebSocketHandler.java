@@ -15,12 +15,12 @@ public class ConsoleWebSocketHandler {
 
     @OnWebSocketConnect
     public void onConnect(Session user) throws Exception {
-        String query = user.getUpgradeRequest().getQueryString();
-        String username = "User" + Console.nextUserNumber++;
         String password = user.getUpgradeRequest().getParameterMap().get("password").get(0);
         if (DigestUtils.sha256Hex(password).equals(ServerManager.passwordHash)) {
+            String username = "User" + Console.nextUserNumber++;
             System.out.println(username + " (" + user.getRemoteAddress().getAddress() + ") connected!");
             Console.userUsernameMap.put(user, username);
+            Console.broadcastMessage("Server", "");
         } else {
             System.out.println("Unsuccessful login from: '" + user.getRemoteAddress().getAddress() + "'!");
             user.close();

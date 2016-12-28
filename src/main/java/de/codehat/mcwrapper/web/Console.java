@@ -18,6 +18,7 @@ public class Console {
             try {
                 session.getRemote().sendString(String.valueOf(new JSONObject()
                         .put("userMessage", message)
+                        .put("userList", userUsernameMap.values())
                 ));
             } catch (Exception e) {
                 e.printStackTrace();

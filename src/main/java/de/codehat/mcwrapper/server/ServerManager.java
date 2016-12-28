@@ -43,11 +43,14 @@ public class ServerManager {
         Server server = this.getServer(name);
         passwordHash = server.getPassword();
         System.out.println("Starting server '" + name + "' with uuid '" + server.getUuid() + "'...");
-        ipAddress(server.getIpAddress());
-        port(server.getPort());
-        staticFiles.location("/public");
-        webSocket("/console", ConsoleWebSocketHandler.class);
-        init();
+        if (server.isWebInterface()) {
+            ipAddress(server.getIpAddress());
+            port(server.getPort());
+            secure(Constants.SSL_DIR + "keystore.jks", "Test123", null, null);
+            staticFiles.location("/public");
+            webSocket("/console", ConsoleWebSocketHandler.class);
+            init();
+        }
 
         while (restart) {
             subExit = false;
@@ -103,7 +106,7 @@ public class ServerManager {
                     System.out.println(line);
                     /*Console.userUsernameMap.keySet().stream().filter(Session::isOpen).forEach(s -> Console.broadcastMessage(
                             Console.userUsernameMap.get(s), lineCopy));*/
-                    Console.broadcastMessage("Server", lineCopy);
+                    if (server.isWebInterface()) Console.broadcastMessage("Server", lineCopy);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -120,7 +123,7 @@ public class ServerManager {
                 e.printStackTrace();
             }
         }
-        stop();
+        if (server.isWebInterface()) stop();
         System.out.println("Press ENTER to close application.");
     }
 

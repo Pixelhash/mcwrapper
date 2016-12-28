@@ -1,37 +1,49 @@
 var webSocket = null;//new WebSocket("ws://localhost:23843/chat?peter=Hallo");
 var newline = String.fromCharCode(13, 10);
+var lastCmd = null;
 
 $(document).ready(function () {
     $('.main').hide();
 
     $('#login').on('click', function () {
+        if (webSocket != null) return;
         $(this).toggleClass('is-loading is-disabled');
-        webSocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/console?password=" + $('#password').val());
+        try {
+            webSocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/console?password=" + $('#password').val());
+        } catch (err) {
+            $('#status').text(err.message);
+            return;
+        }
 
         webSocket.onerror = function () {
-            alert("Could not connect to server :(");
-            $('#login').toggleClass('is-loading is-disabled');
+            $('#status').text("Could not connect to server :(");
+            if ($('#login').hasClass('is-loading')) $('#login').toggleClass('is-loading is-disabled');
             webSocket.close();
             webSocket = null;
+            $('.main').hide();
+        };
+
+        webSocket.onclose = function () {
+            $('#status').text("Connection closed!");
+            if ($('#login').hasClass('is-loading')) $('#login').toggleClass('is-loading is-disabled');
+            webSocket = null;
+            $('.main').hide();
         };
 
         webSocket.onopen = function () {
-            webSocket.send("Ping!");
+            //webSocket.send("ping");
 
             setTimeout(function () {
-                if (webSocket == null || webSocket.readyState == 3) {
+                if (webSocket == null || webSocket.readyState != 1) {
                     return;
                 }
-                $('#auth').hide();
                 $('.main').show();
-                alert("Connected");
+                $('#status').text("Successfully connected!");
                 //Establish the WebSocket connection and set up event handlers
                 webSocket.onmessage = function (msg) {
                     updateChat(msg);
                 };
-                webSocket.onclose = function () {
-                    alert("WebSocket connection closed")
-                };
+                $('#auth').hide();
 
                 //Send message if "Send" is clicked
                 $('#send').on("click", function () {
@@ -42,9 +54,11 @@ $(document).ready(function () {
                 $('#message').on("keypress", function (e) {
                     if (e.keyCode === 13) {
                         sendMessage(e.target.value);
+                    } else if (e.keyCode == 38 && lastCmd != null) {
+                        $('#message').val(lastCmd);
                     }
                 });
-            }, 2500);
+            }, 2000);
         };
     });
 
@@ -52,8 +66,9 @@ $(document).ready(function () {
 
 //Send a message if it's not empty, then clear the input field
 function sendMessage(message) {
-    if (message !== "") {
+    if ($('#message').val() && /\S/.test($('#message').val())) {
         webSocket.send(message);
+        lastCmd = message;
         $("#message").val("");
     }
 }
@@ -66,10 +81,15 @@ function updateChat(msg) {
     /*var psconsole = $('#console');
     if(psconsole.length)
         psconsole.scrollTop(psconsole[0].scrollHeight - psconsole.height());*/
-    $('.console').append('<blockquote class="line">' + escapeHtml(data.userMessage) + '</blockquote>');
+    if (data.userMessage != "") $('.console').append('<blockquote class="line">' + escapeHtml(data.userMessage) + '</blockquote>');
     $('.console').scrollTop($('.console')[0].scrollHeight);
     var count = $('.console > blockquote').length;
     if (count > 50) $('.console blockquote:first').remove();
+
+    $('#users').html("");
+    data.userList.forEach(function (user) {
+       $('#users').append('<li>' + user + '</li>');
+    });
 }
 
 function escapeHtml(unsafe) {

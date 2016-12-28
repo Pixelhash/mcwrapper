@@ -14,6 +14,9 @@ public class Constants {
     // Logs directory
     public static final String LOG_DIR = APP_DIR + "logs" + File.separator;
 
+    // SSL directory
+    public static final String SSL_DIR = APP_DIR + "ssl" + File.separator;
+
     // Server configurations directory
     public static final String SERVER_CONFIG_DIR = APP_DIR + "servers" + File.separator;
 
