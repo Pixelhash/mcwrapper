@@ -66,8 +66,17 @@ function updateChat(msg) {
     /*var psconsole = $('#console');
     if(psconsole.length)
         psconsole.scrollTop(psconsole[0].scrollHeight - psconsole.height());*/
-    $('.console').append('<blockquote class="line">' + data.userMessage + '</blockquote>');
+    $('.console').append('<blockquote class="line">' + escapeHtml(data.userMessage) + '</blockquote>');
     $('.console').scrollTop($('.console')[0].scrollHeight);
     var count = $('.console > blockquote').length;
     if (count > 50) $('.console blockquote:first').remove();
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
