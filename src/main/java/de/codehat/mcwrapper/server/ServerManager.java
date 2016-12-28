@@ -42,11 +42,15 @@ public class ServerManager {
         Server server = this.getServer(name);
         passwordHash = server.getPassword();
         System.out.println("Starting server '" + name + "' with uuid '" + server.getUuid() + "'...");
+        boolean restart = true;
+
+        while (restart) {
+            restart = server.isRestartOnCrash();
+        }
 
         ipAddress(server.getIpAddress());
         port(server.getPort());
         staticFiles.location("/public");
-        //staticFiles.expireTime(600);
         webSocket("/console", ConsoleWebSocketHandler.class);
         init();
 
@@ -102,9 +106,9 @@ public class ServerManager {
         //Wait to get exit value
         try {
             int exitValue = process.waitFor();
+            stop();
             System.out.println("\n\nExit Value is " + exitValue);
             System.out.println("Press ENTER to close application.");
-            halt();
             subExit = true;
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block

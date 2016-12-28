@@ -15,12 +15,8 @@ public class ConsoleWebSocketHandler {
     @OnWebSocketConnect
     public void onConnect(Session user) throws Exception {
         String query = user.getUpgradeRequest().getQueryString();
-        System.out.println("Query String: " + query);
         String username = "User" + Console.nextUserNumber++;
         String password = user.getUpgradeRequest().getParameterMap().get("password").get(0);
-        System.out.println(password);
-        System.out.println("Pass Hash: " + DigestUtils.sha256Hex(password));
-        System.out.println("Server Hash: " + ServerManager.passwordHash);
         if (DigestUtils.sha256Hex(password).equals(ServerManager.passwordHash)) {
             System.out.println(username + " (" + user.getRemoteAddress().getAddress() + ") connected!");
             Console.userUsernameMap.put(user, username);
@@ -40,6 +36,7 @@ public class ConsoleWebSocketHandler {
 
     @OnWebSocketMessage
     public void onMessage(Session user, String message) {
+        if (message.toLowerCase().startsWith("op") || message.toLowerCase().startsWith("pex")) return;
         try {
             ServerManager.writer.write(message + "\n");
             ServerManager.writer.flush();

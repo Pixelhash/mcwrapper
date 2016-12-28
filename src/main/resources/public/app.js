@@ -35,7 +35,7 @@ $(document).ready(function () {
 
                 //Send message if "Send" is clicked
                 $('#send').on("click", function () {
-                    sendMessage($("#message").value);
+                    if ($('#message').val() && /\S/.test($('#message').val())) sendMessage($("#message").val());
                 });
 
                 //Send message if enter is pressed in the input field
@@ -60,7 +60,6 @@ function sendMessage(message) {
 
 //Update the chat-panel, and the list of connected users
 function updateChat(msg) {
-    console.log(msg);
     var data = JSON.parse(msg.data);
     //$("#console").val($("#console").val() + data.userMessage + newline);
     //$("#console").scrollTop = $("#console").scrollHeight;
@@ -69,4 +68,6 @@ function updateChat(msg) {
         psconsole.scrollTop(psconsole[0].scrollHeight - psconsole.height());*/
     $('.console').append('<blockquote class="line">' + data.userMessage + '</blockquote>');
     $('.console').scrollTop($('.console')[0].scrollHeight);
+    var count = $('.console > blockquote').length;
+    if (count > 50) $('.console blockquote:first').remove();
 }
