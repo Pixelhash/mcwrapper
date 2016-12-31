@@ -5,7 +5,7 @@ import java.util.UUID;
 public class Server {
 
     public static final String[] FIELDS = { "name", "directory", "jar", "startArgs", "webInterface",
-            "ipAddress", "port", "restartOnCrash" };
+            "ipAddress", "port", "keystore", "keystorePass", "restartOnCrash" };
 
     private String name;
     private UUID uuid = UUID.randomUUID();
@@ -14,6 +14,8 @@ public class Server {
     private String[] startArgs;
     private String ipAddress = "0.0.0.0";
     private String password;
+    private String keystore;
+    private String keystorePass;
     private boolean webInterface;
     private boolean restartOnCrash = true;
     private int port = 23843;
@@ -72,6 +74,22 @@ public class Server {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getKeystore() {
+        return keystore;
+    }
+
+    public void setKeystore(String keystore) {
+        this.keystore = keystore;
+    }
+
+    public String getKeystorePass() {
+        return keystorePass;
+    }
+
+    public void setKeystorePass(String keystorePass) {
+        this.keystorePass = keystorePass;
     }
 
     public boolean isWebInterface() {

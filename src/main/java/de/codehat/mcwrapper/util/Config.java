@@ -1,24 +1,14 @@
 package de.codehat.mcwrapper.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.codehat.mcwrapper.i18n.Locale;
+
+import java.io.*;
 
 /**
  * MCWrapper's config class representation.
  */
 public class Config {
-
-    // Application language
-    public Locale locale;
 
     // Application version
     public int version;
@@ -29,7 +19,6 @@ public class Config {
      * Config instance.
      */
     public Config() {
-        this.locale = Locale.ENGLISH;
         this.version = 1;
         /*this.NAMES = new ArrayList<String>();
         this.NAMES.add("Peter");

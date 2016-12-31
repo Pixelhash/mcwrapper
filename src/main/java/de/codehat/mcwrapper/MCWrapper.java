@@ -33,7 +33,6 @@ public class MCWrapper {
             // Load stored Config
             Config.load(Constants.CONFIG);
         }
-        //TODO: Create a new LanguageManager based on current language from config!
 
         this.registerArguments();
         Options options = new Options();

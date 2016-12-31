@@ -1,9 +1,123 @@
-var webSocket = null;//new WebSocket("ws://localhost:23843/chat?peter=Hallo");
-var newline = String.fromCharCode(13, 10);
+var webSocket = null;
 var lastCmd = null;
+var maxRows = 50;
+
+var colorPattern = [
+    '\\[30;22m',
+    '\\[34;22m',
+    '\\[32;22m',
+    '\\[36;22m',
+    '\\[31;22m',
+    '\\[35;22m',
+    '\\[33;22m',
+    '\\[37;22m',
+    '\\[30;1m',
+    '\\[34;1m',
+    '\\[32;1m',
+    '\\[36;1m',
+    '\\[31;1m',
+    '\\[35;1m',
+    '\\[33;1m',
+    '\\[37;1m'
+];
+
+var colorPattern2 = [
+    '\\[0;30;22m',
+    '\\[0;34;22m',
+    '\\[0;32;22m',
+    '\\[0;36;22m',
+    '\\[0;31;22m',
+    '\\[0;35;22m',
+    '\\[0;33;22m',
+    '\\[0;37;22m',
+    '\\[0;30;1m',
+    '\\[0;34;1m',
+    '\\[0;32;1m',
+    '\\[0;36;1m',
+    '\\[0;31;1m',
+    '\\[0;35;1m',
+    '\\[0;33;1m',
+    '\\[0;37;1m'
+];
+
+var formatPattern = [
+    '\\[5m',
+    '\\[21m',
+    '\\[9m',
+    '\\[4m',
+    '\\[3m',
+    '\\[0;39m',
+    '\\[0m',
+    '\\[m'
+];
+
+var colorReplace = [
+    '<span style="color: #000000;">',
+    '<span style="color: #0000AA;">',
+    '<span style="color: #00AA00;">',
+    '<span style="color: #00AAAA;">',
+    '<span style="color: #AA0000;">',
+    '<span style="color: #AA00AA;">',
+    '<span style="color: #FFAA00;">',
+    '<span style="color: #AAAAAA;">',
+    '<span style="color: #555555;">',
+    '<span style="color: #5555FF;">',
+    '<span style="color: #55FF55;">',
+    '<span style="color: #55FFFF;">',
+    '<span style="color: #FF5555;">',
+    '<span style="color: #FF55FF;">',
+    '<span style="color: #FFFF55;">',
+    '<span style="color: #FFFFFF;">',
+];
+
+var formatReplace = [
+    '',
+    '<b>',
+    '<s>',
+    '<u>',
+    '<i>',
+    '</b></s></u></i></span>',
+    '</b></s></u></i></span>',
+    '</b></s></u></i></span>'
+];
+
+function replaceBulk( str, findArray, replaceArray ){
+    var i, regex = [], map = {};
+    for( i=0; i<findArray.length; i++ ){
+        regex.push( findArray[i]);//.replace('[-[\]{}()*+?.\\^$|#,]','\\$0') );
+        map[findArray[i]] = replaceArray[i];
+    }
+    regex = regex.join('|');
+    str = str.replace( new RegExp( regex, 'g' ), function(matched){
+        return map['\\' + matched];
+    });
+    return str;
+}
 
 $(document).ready(function () {
+
+    $.fn.isFadeOut = function(){
+        return this.css('display') == 'none';
+    };
+
     $('.main').hide();
+
+    // Handle login with 'ENTER' key.
+    $('#password').on("keydown", function (e) {
+        if (e.keyCode === 13) {
+            $('#login').trigger('click');
+        }
+    });
+
+    $('#height').on('input', function () {
+        var val = $('#height').val();
+        if (val >= 20 && val <= 800) $('.console').height(val);
+    });
+
+    $('#rows').on('input', function () {
+        var val = $(this).val();
+        if (val >= 1 && val <= 200) maxRows = val;
+    });
 
     $('#login').on('click', function () {
         if (webSocket != null) return;
@@ -16,6 +130,7 @@ $(document).ready(function () {
         }
 
         webSocket.onerror = function () {
+            if ($('#status').isFadeOut()) $('#status').fadeToggle();
             $('#status').text("Could not connect to server :(");
             if ($('#login').hasClass('is-loading')) $('#login').toggleClass('is-loading is-disabled');
             webSocket.close();
@@ -24,6 +139,7 @@ $(document).ready(function () {
         };
 
         webSocket.onclose = function () {
+            if ($('#status').isFadeOut()) $('#status').fadeToggle();
             $('#status').text("Connection closed!");
             if ($('#login').hasClass('is-loading')) $('#login').toggleClass('is-loading is-disabled');
             webSocket = null;
@@ -39,6 +155,9 @@ $(document).ready(function () {
                 }
                 $('.main').show();
                 $('#status').text("Successfully connected!");
+                setTimeout(function () {
+                    $('#status').fadeToggle();
+                }, 3000);
                 //Establish the WebSocket connection and set up event handlers
                 webSocket.onmessage = function (msg) {
                     updateChat(msg);
@@ -51,7 +170,7 @@ $(document).ready(function () {
                 });
 
                 //Send message if enter is pressed in the input field
-                $('#message').on("keypress", function (e) {
+                $('#message').on("keydown", function (e) {
                     if (e.keyCode === 13) {
                         sendMessage(e.target.value);
                     } else if (e.keyCode == 38 && lastCmd != null) {
@@ -76,15 +195,20 @@ function sendMessage(message) {
 //Update the chat-panel, and the list of connected users
 function updateChat(msg) {
     var data = JSON.parse(msg.data);
-    //$("#console").val($("#console").val() + data.userMessage + newline);
-    //$("#console").scrollTop = $("#console").scrollHeight;
-    /*var psconsole = $('#console');
-    if(psconsole.length)
-        psconsole.scrollTop(psconsole[0].scrollHeight - psconsole.height());*/
-    if (data.userMessage != "") $('.console').append('<blockquote class="line">' + escapeHtml(data.userMessage) + '</blockquote>');
+    if (data.userMessage != "") {
+        var line = escapeHtml(data.userMessage);
+        line = replaceBulk(line, colorPattern, colorReplace);
+        line = replaceBulk(line, colorPattern2, colorReplace);
+        line = replaceBulk(line, formatPattern, formatReplace);
+        $('.console').append('<blockquote class="line">' + line + '</blockquote>');
+    }
     $('.console').scrollTop($('.console')[0].scrollHeight);
     var count = $('.console > blockquote').length;
-    if (count > 50) $('.console blockquote:first').remove();
+    if (count > maxRows) {
+        for (i = count; i > maxRows; i--) {
+            $('.console blockquote:first').remove();
+        }
+    }
 
     $('#users').html("");
     data.userList.forEach(function (user) {
@@ -98,5 +222,6 @@ function escapeHtml(unsafe) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/'/g, "&#039;")
+        .replace(/\u001B/g, "");
 }

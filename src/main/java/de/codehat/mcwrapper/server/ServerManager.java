@@ -3,10 +3,9 @@ package de.codehat.mcwrapper.server;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.codehat.mcwrapper.util.Constants;
-import de.codehat.mcwrapper.web.*;
 import de.codehat.mcwrapper.web.Console;
+import de.codehat.mcwrapper.web.ConsoleWebSocketHandler;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.eclipse.jetty.websocket.api.Session;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -46,12 +45,13 @@ public class ServerManager {
         if (server.isWebInterface()) {
             ipAddress(server.getIpAddress());
             port(server.getPort());
-            secure(Constants.SSL_DIR + "keystore.jks", "Test123", null, null);
+            secure(Constants.SSL_DIR + server.getKeystore() + ".jks", server.getKeystorePass(), null, null);
             staticFiles.location("/public");
             webSocket("/console", ConsoleWebSocketHandler.class);
             init();
         }
 
+        Scanner in = new Scanner(System.in);
         while (restart) {
             subExit = false;
             restart = server.isRestartOnCrash();
@@ -71,10 +71,10 @@ public class ServerManager {
             InputStream is = process.getInputStream();
             OutputStream os = process.getOutputStream();
             writer = new BufferedWriter(new OutputStreamWriter(os));
-            new Thread(() -> {
-                Scanner in = new Scanner(System.in);
+            Thread inputThread = new Thread(() -> {
+                //Scanner in = new Scanner(System.in);
                 boolean exit = false;
-                while (!exit) {
+                while (!exit && in.hasNext()) {
                     String cmd1 = in.nextLine();
                     if (subExit) {
                         exit = true;
@@ -87,6 +87,11 @@ public class ServerManager {
                             writer.flush();
                             exit = true;
                             return;
+                        } else if (cmd1.toLowerCase().equals("stop")) {
+                            writer.write("stop\n");
+                            writer.flush();
+                            exit = true;
+                            return;
                         }
                         writer.write(cmd1 + "\n");
                         writer.flush();
@@ -94,7 +99,8 @@ public class ServerManager {
                         e.printStackTrace();
                     }
                 }
-            }).start();
+            });
+            inputThread.start();
 
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);
@@ -117,13 +123,19 @@ public class ServerManager {
                 int exitValue = process.waitFor();
                 System.out.println("\n\nExit Value is " + exitValue);
                 subExit = true;
+                os.close();
+                is.close();
+                writer.close();
+                br.close();
+                isr.close();
                 System.out.println("Sleeping 2.5s to stop process...");
                 Thread.sleep(2500);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
         }
         if (server.isWebInterface()) stop();
+        in.close();
         System.out.println("Press ENTER to close application.");
     }
 
@@ -174,15 +186,16 @@ public class ServerManager {
             field.setAccessible(true);
             boolean correct = false;
             do {
-                // Check if 'webInterface' is false, then skip 'port' and 'ipAddress'
-                if ((strField.equals("port") || strField.equals("ipAddress")) && !server.isWebInterface()) {
+                // Check if 'webInterface' is false, then skip 'port', 'ipAddress', 'keystore' and 'keystorePass'
+                if ((strField.equals("port") || strField.equals("ipAddress") || strField.equals("keystore")
+                        || strField.equals("keystorePass")) && !server.isWebInterface()) {
                     correct = true;
                     continue;
                 }
 
-                System.out.print(strField.toUpperCase() + " [" + this.fieldDescriptions.get(strField) +"]: ");
+                System.out.println(strField.toUpperCase() + " [" + this.fieldDescriptions.get(strField) +"]:");
                 Object input = in.nextLine();
-                if (this.fieldTests.get(strField).test(input)) {
+                if (!this.fieldTests.containsKey(strField) || this.fieldTests.get(strField).test(input)) {
                     // Check if input is boolean
                     if (strField.equals("webInterface") || strField.equals("restartOnCrash")) {
                         if (input.equals("y")) input = true;
@@ -264,6 +277,12 @@ public class ServerManager {
 
         // Description for 'port' field
         this.fieldDescriptions.put("port", "valid port in range of 1 - 65535");
+
+        // Description for 'keystore' field
+        this.fieldDescriptions.put("keystore", "Keystore file name (/.mcwrapper/ssl/<name>.jks)");
+
+        // Description for 'keystorePass' field
+        this.fieldDescriptions.put("keystorePass", "Keystore password");
     }
 
     private void setupFieldTests() {
@@ -294,6 +313,9 @@ public class ServerManager {
 
         // Check if 'port' is a valid port
         this.fieldTests.put("port", i -> Integer.valueOf((String) i) >= 0 && Integer.valueOf((String) i) <= 65535);
+
+        // Check if 'keystore' does exist
+        this.fieldTests.put("keystore", i -> new File(Constants.SSL_DIR + i + ".jks").exists());
     }
 
 }
