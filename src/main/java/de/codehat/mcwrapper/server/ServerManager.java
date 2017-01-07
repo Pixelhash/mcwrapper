@@ -6,6 +6,11 @@ import de.codehat.mcwrapper.util.Constants;
 import de.codehat.mcwrapper.web.Console;
 import de.codehat.mcwrapper.web.ConsoleWebSocketHandler;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -28,17 +33,20 @@ public class ServerManager {
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private SecureRandom random = new SecureRandom();
     private boolean subExit = false;
+    private Thread inputThread = null;
 
     public static BufferedWriter writer;
     public static String passwordHash = null;
     public static boolean restart = true;
+
+    public static boolean exit = false;
 
     public ServerManager() {
         this.setupFieldTests();
         this.setupFieldDescriptions();
     }
 
-    public void startServer(String name) throws ServerDoesNotExistException {
+    public void startServer(String name) throws ServerDoesNotExistException, IOException {
         Server server = this.getServer(name);
         passwordHash = server.getPassword();
         System.out.println("Starting server '" + name + "' with uuid '" + server.getUuid() + "'...");
@@ -51,13 +59,20 @@ public class ServerManager {
             init();
         }
 
-        Scanner in = new Scanner(System.in);
+
+        Terminal terminal = TerminalBuilder.builder()//.streams(System.in, System.out)
+                .system(true)
+                .build();
+        LineReader lineReader = LineReaderBuilder.builder()
+                .terminal(terminal)
+                .build();
         while (restart) {
             subExit = false;
             restart = server.isRestartOnCrash();
             ProcessBuilder processBuilder = new ProcessBuilder(server.getStartArgs());
             processBuilder.directory(new File(server.getDirectory()));
             processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            processBuilder.environment().put("TERM", "xterm");
             Process process = null;
             try {
                 process = processBuilder.start();
@@ -66,12 +81,36 @@ public class ServerManager {
                 e.printStackTrace();
                 System.exit(1);
             }
-
             //Read out dir output
             InputStream is = process.getInputStream();
             OutputStream os = process.getOutputStream();
             writer = new BufferedWriter(new OutputStreamWriter(os));
-            Thread inputThread = new Thread(() -> {
+            if (inputThread == null) {
+                inputThread = new Thread(() -> {
+                    try {
+                        String line;
+                        exit = false;
+                        while (!exit && (line = lineReader.readLine()) != null && !Thread.currentThread().isInterrupted()) { //while (!isInterrupted)!
+                            if (line.trim().isEmpty()) {
+                                System.out.println("-> Empty line!");
+                                continue;
+                            }
+                            if (line.equals(".stop")) {
+                                restart = false;
+                                writer.write("stop\n");
+                                writer.flush();
+                                exit = true;
+                                break;
+                            }
+                            writer.write(line + "\n");
+                            writer.flush();
+                        }
+                    } catch(IOException e) {
+                        e.printStackTrace();
+                    } catch(UserInterruptException e) {
+                        System.out.println("[!] Input thread interrupted by application!");
+                    }
+                /*
                 //Scanner in = new Scanner(System.in);
                 boolean exit = false;
                 while (!exit && in.hasNext()) {
@@ -98,9 +137,10 @@ public class ServerManager {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
-            });
-            inputThread.start();
+                }*/
+                });
+                inputThread.start();
+            }
 
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);
@@ -135,8 +175,8 @@ public class ServerManager {
             }
         }
         if (server.isWebInterface()) stop();
-        in.close();
-        System.out.println("Press ENTER to close application.");
+        inputThread.interrupt();
+        System.in.close();
     }
 
     public String nextSessionId() {

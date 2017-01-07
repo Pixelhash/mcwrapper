@@ -40,6 +40,7 @@ public class ConsoleWebSocketHandler {
         if (message.toLowerCase().startsWith("op") || message.toLowerCase().startsWith("pex")) return;
         try {
             if (message.toLowerCase().equals("!stop")) {
+                ServerManager.exit = true;
                 ServerManager.restart = false;
                 ServerManager.writer.write("stop\n");
                 ServerManager.writer.flush();
