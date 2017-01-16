@@ -18,6 +18,10 @@
     margin-bottom: 2em;
 }
 
+#commands {
+    overflow-y: scroll;
+}
+
 .line {
     font-family: "Lucida Console", Monaco, monospace;
     /*color: #2d2d2d;*/

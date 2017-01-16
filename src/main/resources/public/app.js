@@ -1,6 +1,8 @@
 var webSocket = null;
-var lastCmd = null;
 var maxRows = 50;
+var maxCommands = 5;
+var lastCommands = [];
+var lastCommand = -1;
 
 var colorPattern = [
     '\\[30;22m',
@@ -173,8 +175,26 @@ $(document).ready(function () {
                 $('#message').on("keydown", function (e) {
                     if (e.keyCode === 13) {
                         sendMessage(e.target.value);
-                    } else if (e.keyCode == 38 && lastCmd != null) {
-                        $('#message').val(lastCmd);
+                    } else if (e.keyCode == 38 && lastCommands.length != null) {
+                        console.log("UP: " + lastCommand);
+                        // Arrow UP:
+                        if (lastCommand - 1 < 0) return;
+                        lastCommand--;
+                        $('#message').val(lastCommands[lastCommand]);
+
+
+                    } else if (e.keyCode == 40 && lastCommands.length != null) {
+                        console.log("DOWN: " + lastCommand);
+                        // Arrow DOWN:
+                        e.preventDefault();
+                        if (lastCommand + 1 >= lastCommands.length) {
+                            $('#message').val('');
+                            lastCommand = lastCommands.length;
+                            return;
+                        }
+                        lastCommand++;
+                        $('#message').val(lastCommands[lastCommand]);
+
                     }
                 });
             }, 2000);
@@ -187,8 +207,24 @@ $(document).ready(function () {
 function sendMessage(message) {
     if ($('#message').val() && /\S/.test($('#message').val())) {
         webSocket.send(message);
-        lastCmd = message;
+        addCommand(message);
+        lastCommand = lastCommands.length;
         $("#message").val("");
+        updateCommandHistory();
+    }
+}
+
+function updateCommandHistory() {
+    $('#commands').html('');
+    lastCommands.forEach(function (entry) {
+        $('#commands').append('<li><a href="#">' + entry + '</a></li>');
+    })
+}
+
+function addCommand(command) {
+    if (lastCommands[lastCommands.length - 1] == command) return;
+    if (lastCommands.push(command) > maxCommands) {
+        lastCommands.shift();
     }
 }
 

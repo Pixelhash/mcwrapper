@@ -6,6 +6,7 @@ import de.codehat.mcwrapper.util.Constants;
 import de.codehat.mcwrapper.web.Console;
 import de.codehat.mcwrapper.web.ConsoleWebSocketHandler;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -59,9 +60,9 @@ public class ServerManager {
             init();
         }
 
-
-        Terminal terminal = TerminalBuilder.builder()//.streams(System.in, System.out)
-                .system(true)
+        CloseShieldInputStream csi = new CloseShieldInputStream(System.in);
+        Terminal terminal = TerminalBuilder.builder().streams(csi, System.out)
+                //.system(true)
                 .build();
         LineReader lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -72,7 +73,6 @@ public class ServerManager {
             ProcessBuilder processBuilder = new ProcessBuilder(server.getStartArgs());
             processBuilder.directory(new File(server.getDirectory()));
             processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
-            processBuilder.environment().put("TERM", "xterm");
             Process process = null;
             try {
                 process = processBuilder.start();
@@ -106,7 +106,7 @@ public class ServerManager {
                             writer.flush();
                         }
                     } catch(IOException e) {
-                        e.printStackTrace();
+                        System.out.println("[!] Closed IO without cleanup!");
                     } catch(UserInterruptException e) {
                         System.out.println("[!] Input thread interrupted by application!");
                     }
@@ -139,6 +139,7 @@ public class ServerManager {
                     }
                 }*/
                 });
+                inputThread.setName("Input");
                 inputThread.start();
             }
 
@@ -176,7 +177,14 @@ public class ServerManager {
         }
         if (server.isWebInterface()) stop();
         inputThread.interrupt();
-        System.in.close();
+        csi.close();
+        System.out.println("Cleanup threads...");
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.exit(0);
     }
 
     public String nextSessionId() {
@@ -218,6 +226,7 @@ public class ServerManager {
     }
 
     public boolean createServer() throws NoSuchFieldException, IllegalAccessException {
+        // TODO: Do not use Scanner instead use JLine!
         Scanner in = new Scanner(System.in);
         Server server = new Server();
         System.out.println("You are creating a new Server. Please enter all necessary information.");
@@ -274,8 +283,8 @@ public class ServerManager {
             String password = this.nextSessionId();
             server.setPassword(DigestUtils.sha256Hex(password));
             this.saveServer(server);
-            System.out.printf("Saved server '%s' with uuid '%s' to\n'%s'", server.getName(), server.getUuid(),
-                    Constants.SERVER_CONFIG_DIR + server.getName() + ".json\n");
+            System.out.printf("Saved server '%s' with uuid '%s' to\n'%s'\n", server.getName(), server.getUuid(),
+                    Constants.SERVER_CONFIG_DIR + server.getName() + ".json");
             System.out.printf("Web interface password: '%s'", password);
             return true;
         } else {

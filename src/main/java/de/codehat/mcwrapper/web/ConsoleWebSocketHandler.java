@@ -1,6 +1,5 @@
 package de.codehat.mcwrapper.web;
 
-import de.codehat.mcwrapper.server.Server;
 import de.codehat.mcwrapper.server.ServerManager;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.jetty.websocket.api.*;
@@ -25,7 +24,6 @@ public class ConsoleWebSocketHandler {
             System.out.println("Unsuccessful login from: '" + user.getRemoteAddress().getAddress() + "'!");
             user.close();
         }
-        //Console.broadcastMessage(sender = "Server", msg = (username + " joined the chat"));
     }
 
     @OnWebSocketClose
@@ -33,6 +31,7 @@ public class ConsoleWebSocketHandler {
         String username = Console.userUsernameMap.get(user);
         Console.userUsernameMap.remove(user);
         Console.broadcastMessage(sender = "Server", msg = ("-> '" + username + "' left the console"));
+        System.out.println(username + " (" + user.getRemoteAddress().getAddress() + ") disconnected!");
     }
 
     @OnWebSocketMessage

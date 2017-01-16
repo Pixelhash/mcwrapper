@@ -1,0 +1,9 @@
+machine:
+  timezone:
+    Europe/Berlin
+  java:
+    version: openjdk8
+test:
+  post:
+    - mkdir $CIRCLE_ARTIFACTS/jar_files
+    - mv ~/mcwrapper/target/MCWrapper.jar $CIRCLE_ARTIFACTS/jar_files/MCWrapper-$CIRCLE_BUILD_NUM.jar
