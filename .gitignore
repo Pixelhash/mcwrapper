@@ -10,3 +10,6 @@ dependency-reduced-pom.xml
 *.ipr
 *.iws
 .idea/
+
+# Sphinx documentation
+docs/_build/
