@@ -62,7 +62,6 @@ public class ServerManager {
 
         CloseShieldInputStream csi = new CloseShieldInputStream(System.in);
         Terminal terminal = TerminalBuilder.builder().streams(csi, System.out)
-                //.system(true)
                 .build();
         LineReader lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -110,34 +109,6 @@ public class ServerManager {
                     } catch(UserInterruptException e) {
                         System.out.println("[!] Input thread interrupted by application!");
                     }
-                /*
-                //Scanner in = new Scanner(System.in);
-                boolean exit = false;
-                while (!exit && in.hasNext()) {
-                    String cmd1 = in.nextLine();
-                    if (subExit) {
-                        exit = true;
-                        return;
-                    }
-                    try {
-                        if (cmd1.toLowerCase().equals("!stop")) {
-                            restart = false;
-                            writer.write("stop\n");
-                            writer.flush();
-                            exit = true;
-                            return;
-                        } else if (cmd1.toLowerCase().equals("stop")) {
-                            writer.write("stop\n");
-                            writer.flush();
-                            exit = true;
-                            return;
-                        }
-                        writer.write(cmd1 + "\n");
-                        writer.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }*/
                 });
                 inputThread.setName("Input");
                 inputThread.start();
