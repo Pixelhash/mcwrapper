@@ -60,8 +60,8 @@ public class ServerManager {
             init();
         }
 
-        CloseShieldInputStream csi = new CloseShieldInputStream(System.in);
-        Terminal terminal = TerminalBuilder.builder().streams(csi, System.out)
+        //CloseShieldInputStream csi = new CloseShieldInputStream(System.in);
+        Terminal terminal = TerminalBuilder.builder().system(true) //.streams(csi, System.out)
                 .build();
         LineReader lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -148,7 +148,7 @@ public class ServerManager {
         }
         if (server.isWebInterface()) stop();
         inputThread.interrupt();
-        csi.close();
+        //csi.close();
         System.out.println("Cleanup threads...");
         try {
             Thread.sleep(1500);

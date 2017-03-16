@@ -22,7 +22,8 @@ public class ConsoleWebSocketHandler {
             Console.broadcastMessage("Server", "");
         } else {
             System.out.println("Unsuccessful login from: '" + user.getRemoteAddress().getAddress() + "'!");
-            user.close();
+            //user.close();
+            user.disconnect();
         }
     }
 
